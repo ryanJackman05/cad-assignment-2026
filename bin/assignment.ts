@@ -13,5 +13,3 @@ new AppApiStack(app, 'AppApiStack', {
   userPool: cognitoStack.userPool,
   userPoolClient: cognitoStack.userPoolClient,
 });
-
-# frick
