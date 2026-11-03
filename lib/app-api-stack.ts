@@ -18,6 +18,10 @@ export class AppApiStack extends cdk.Stack {
   constructor(scope: Construct, id: string, props: AppApiStackProps) {
     super(scope, id, props);
 
+    // Tables
+    // Movie - PK = m#movieID, SK = m#movieID.
+    // Actor - PK = a#actorID, SK = a#actorID.
+    // Role - PK = m#movieID, SK = a#actorID.
     const table = new dynamodb.TableV2(this, 'MovieCastTable', {
       partitionKey: { name: 'PK', type: dynamodb.AttributeType.STRING },
       sortKey: { name: 'SK', type: dynamodb.AttributeType.STRING },
@@ -91,11 +95,27 @@ export class AppApiStack extends cdk.Stack {
       authorizer: userAuthorizer,
       authorizationType: apig.AuthorizationType.CUSTOM,
     };
+    
     // Routes
+    /* The Web API will support the following endpoints:
+
+GET /movies/{movieID}/roles?[actor=actorID] - Get details of all roles for the specified movie.
+Support an optional query string parameter that specifies an actor ID, e.g. ?actor=4321. 
+Only the role played by that actor in the movie should now be returned, if relevant.
+
+GET /actors/{actorID}?[movie=movieID] - Return the specified actor's profile (DOB, bio, etc).
+Support an optional query string parameter that specifies a movie ID. 
+The response should now also include the description of the actor's role in the specified movie, if relevant.
+
+POST /movies/roles - add a movie role. */
+
     const moviesResource = api.root.addResource('movies');
 
     const movieRolesResource = moviesResource.addResource('{movieID}').addResource('roles');
     movieRolesResource.addMethod('GET', new apig.LambdaIntegration(getMovieRolesFn) );
+
+    const rolesResource = moviesResource.addResource('roles');
+    rolesResource.addMethod('POST', new apig.LambdaIntegration(addMovieRoleFn), userAuth); // todo must be administrator only
 
     api.root
       .addResource('actors')
