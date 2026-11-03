@@ -111,11 +111,14 @@ POST /movies/roles - add a movie role. */
 
     const moviesResource = api.root.addResource('movies');
 
-    const movieRolesResource = moviesResource.addResource('{movieID}').addResource('roles');
-    movieRolesResource.addMethod('GET', new apig.LambdaIntegration(getMovieRolesFn) );
+    moviesResource
+      .addResource('{movieID}')
+      .addResource('roles')
+      .addMethod('GET', new apig.LambdaIntegration(getMovieRolesFn), userAuth);
 
-    const rolesResource = moviesResource.addResource('roles');
-    rolesResource.addMethod('POST', new apig.LambdaIntegration(addMovieRoleFn), userAuth); // todo must be administrator only
+    moviesResource
+      .addResource('roles')
+      .addMethod('POST', new apig.LambdaIntegration(addMovieRoleFn), userAuth); // todo must be administrator only
 
     api.root
       .addResource('actors')
