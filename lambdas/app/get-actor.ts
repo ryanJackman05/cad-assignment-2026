@@ -10,9 +10,7 @@ import {
 import { response } from "../shared/http";
 import { logRequest } from "../shared/request-logger";
 
-export const handler = async (
-  event: APIGatewayProxyEvent
-): Promise<APIGatewayProxyResult> => {
+export const handler = async (event: APIGatewayProxyEvent): Promise<APIGatewayProxyResult> => {
   logRequest(event);
 
   const actorId = parseId(event.pathParameters?.actorID);
@@ -25,6 +23,7 @@ export const handler = async (
   if (movieParam !== undefined && movieId === undefined) {
     return response(400, { message: "movie must be a positive integer" });
   }
+  
   try {
     const actorResult = await ddb.send(
       new GetCommand({
