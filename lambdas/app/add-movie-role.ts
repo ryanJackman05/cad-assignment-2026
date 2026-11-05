@@ -5,9 +5,7 @@ import { isResponse, parseJsonObject, response, createDDbDocClient } from "../sh
 
 const ddbDocClient = createDDbDocClient();
 
-export const handler = async (
-  event: APIGatewayProxyEvent
-): Promise<APIGatewayProxyResult> => {
+export const handler = async (event: APIGatewayProxyEvent): Promise<APIGatewayProxyResult> => {
   const body = parseJsonObject(event);
   if (isResponse(body)) return body;
 
@@ -44,17 +42,35 @@ export const handler = async (
       new TransactWriteCommand({
         TransactItems: [
           {
+            // Movie must exist
             ConditionCheck: {
-              TableName: process.env.TABLE_NAME,
-              Key: { PK: movieKey(role.movieId), 
-                SK: movieKey(role.movieId) }, // added sortKey to specify Role item keys
-              ConditionExpression: "attribute_exists(PK) AND attribute_exists(SK)",
+              TableName: tableName,
+              Key: { 
+                PK: movieKey(role.movieId), 
+                SK: movieKey(role.movieId) },
+              ConditionExpression: "attribute_exists(PK)",
             },
           },
           {
+            // Actor must exist
+            ConditionCheck: {
+              TableName: tableName,
+              Key: { 
+                PK: actorKey(role.actorId), 
+                SK: actorKey(role.actorId) },
+              ConditionExpression: "attribute_exists(PK)",
+            },
+          },
+          {
+            // Create the role, but don't overwrite an existing one
             Put: {
-              TableName: process.env.CAST_TABLE_NAME,
-              Item: body,
+              TableName: tableName,
+              Item: {
+                PK: movieKey(role.movieId),
+                SK: actorKey(role.actorId),
+                ...role,
+              },
+              ConditionExpression: "attribute_not_exists(PK)",
             },
           },
         ],
