@@ -105,21 +105,16 @@ export class AppApiStack extends cdk.Stack {
     // API key generated at deploy time (from API/API Gateway)
     const adminApiKey = api.addApiKey('AdminApiKey');
 
+    // to be used at any "stage" of the API (dev, prod, etc.)
+    // the key needs to be added to a usage plan, which is associated with the API stage
+    const usagePlan = api.addUsagePlan('AdminUsagePlan', {
+      apiStages: [{ stage: api.deploymentStage }], // gets the stage from the API (configured above as "dev" ^^^)
+    });
+    usagePlan.addApiKey(adminApiKey);
+
     // print the key's AWS ID to the console
     new cdk.CfnOutput(this, 'AdminApiKeyId', { value: adminApiKey.keyId });
 
-    // Routes
-    /* The Web API will support the following endpoints:
-
-    GET /movies/{movieID}/roles?[actor=actorID] - Get details of all roles for the specified movie.
-    Support an optional query string parameter that specifies an actor ID, e.g. ?actor=4321. 
-    Only the role played by that actor in the movie should now be returned, if relevant.
-
-    GET /actors/{actorID}?[movie=movieID] - Return the specified actor's profile (DOB, bio, etc).
-    Support an optional query string parameter that specifies a movie ID. 
-    The response should now also include the description of the actor's role in the specified movie, if relevant.
-
-    POST /movies/roles - add a movie role. */
 
     const moviesResource = api.root.addResource('movies');
 
