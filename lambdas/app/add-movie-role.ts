@@ -78,6 +78,9 @@ export const handler = async (event: APIGatewayProxyEvent): Promise<APIGatewayPr
     );
     return response(201, { message: "Role added", data: role });
   } catch (err) {
+    if (err instanceof Error && err.name === "TransactionCanceledException") {
+      return response(400, { message: "Role already exists" }); // TODO confirm error codes
+    }
     console.error("DynamoDB error:", err);
     return response(500, {
       message: "Internal server error",
