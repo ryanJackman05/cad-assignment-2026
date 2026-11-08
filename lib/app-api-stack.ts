@@ -96,7 +96,12 @@ export class AppApiStack extends cdk.Stack {
       authorizer: userAuthorizer,
       authorizationType: apig.AuthorizationType.CUSTOM,
     };
-    
+
+    const adminAuth: apig.MethodOptions = {
+      authorizationType: apig.AuthorizationType.NONE,
+      apiKeyRequired: true,
+    };
+
     // Routes
     /* The Web API will support the following endpoints:
 
@@ -119,7 +124,7 @@ POST /movies/roles - add a movie role. */
 
     moviesResource
       .addResource('roles')
-      .addMethod('POST', new apig.LambdaIntegration(addMovieRoleFn), userAuth); // todo must be administrator only
+      .addMethod('POST', new apig.LambdaIntegration(addMovieRoleFn), adminAuth);
 
     api.root
       .addResource('actors')
