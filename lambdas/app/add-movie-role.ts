@@ -88,10 +88,9 @@ export const handler = async (event: APIGatewayProxyEvent): Promise<APIGatewayPr
       return response(400, { message: "Transaction failed", reasons }); // unlikely to hit, check if necessary
     }
     // if none of the previous checks apply to this error, return a generic 500 error
-    console.error("DynamoDB error:", err);
+    console.error("DynamoDB error:", err); // err should only be logged internally, not returned to the client
     return response(500, {
-      message: "Internal server error",
-      error: err,
+      message: "Internal server error"
     });
   }
 };

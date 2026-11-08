@@ -39,6 +39,6 @@ export const handler = async (event: APIGatewayProxyEvent): Promise<APIGatewayPr
     return response(200, { data: actor });
   } catch (err) {
     console.error("DynamoDB error:", err);
-    return response(500, { message: "Internal server error", error: err });
+    return response(500, { message: "Internal server error"});
   }
 };
