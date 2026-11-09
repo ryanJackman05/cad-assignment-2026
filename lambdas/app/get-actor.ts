@@ -47,6 +47,10 @@ export const handler = async (event: APIGatewayProxyEvent): Promise<APIGatewayPr
     if (!actorResult.Item) {
       return response(404, { message: `Actor ${actorId} not found` });
     }
+    if(!roleResult?.Item && movieId !== undefined) {
+      return response(404, { message: `No role found for actor ${actorId} on movie ${movieId}` }); 
+      // fail response only needed if movieId is provided
+    }
     const actor = toActor(actorResult.Item);
     const role = roleResult?.Item ? toRole(roleResult.Item) : undefined; // undefined check required due to roleResult
     
