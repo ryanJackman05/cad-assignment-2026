@@ -23,7 +23,7 @@ export const handler = async (event: APIGatewayProxyEvent): Promise<APIGatewayPr
   const movieParam = event.queryStringParameters?.movie;
   const movieId = parseId(movieParam);
   if (movieParam !== undefined && movieId === undefined) {
-    return response(400, { message: "movie must be a positive integer" });
+    return response(400, { message: "movieID must be a positive integer" });
   }
   
   try {
@@ -47,14 +47,15 @@ export const handler = async (event: APIGatewayProxyEvent): Promise<APIGatewayPr
     if (!actorResult.Item) {
       return response(404, { message: `Actor ${actorId} not found` });
     }
-    if(!roleResult?.Item && movieId !== undefined) {
+    if(!roleResult?.Item && movieId !== undefined) { // fail response only needed if movieId is provided
       return response(404, { message: `No role found for actor ${actorId} on movie ${movieId}` }); 
-      // fail response only needed if movieId is provided
     }
+
     const actor = toActor(actorResult.Item);
     const role = roleResult?.Item ? toRole(roleResult.Item) : undefined; // undefined check required due to roleResult
     
     return response(200, { data: role ? { actor, role } : { actor } });
+    
   } catch (err) {
     console.error("DynamoDB error:", err);
     return response(500, { message: "Internal server error"});

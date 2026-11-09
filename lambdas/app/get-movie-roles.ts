@@ -24,7 +24,7 @@ export const handler = async (
   const actorParam = event.queryStringParameters?.actor;
   const actorId = parseId(actorParam);
   if (actorParam !== undefined && actorId === undefined) {
-    return response(400, { message: "actor must be a positive integer" });
+    return response(400, { message: "actorID must be a positive integer" });
   } 
 
   try {
@@ -38,9 +38,14 @@ export const handler = async (
     );
 
     const resultItems = queryResult.Items ?? [];
+
+    if(resultItems.length === 0) { // there will be at least one item if a movie exists
+      return response(404, { message: `Movie ${movieId} not found` });
+    }
+
     if (actorId !== undefined) {
-      const roleItem = resultItems.find(
-        (item) => item.SK === `a#${actorId}`
+      const roleItem = resultItems.find( // extracts the correct role from the array (which should consist of Role/Movie)
+        (item) => item.SK === `a#${actorId}` // TODO fix with actorKey in code pass
       );
       if (!roleItem) {
         return response(404, { message: `No role found for actor ${actorId} on movie ${movieId}` });
@@ -48,7 +53,7 @@ export const handler = async (
       return response(200, { data: [toRole(roleItem)] }); // TODO - toActor/toRole always return an object, so null checks may be a good idea
     }
 
-    return response(200, { data: resultItems.filter(isRoleItem).map(toRole) });
+    return response(200, { data: resultItems.filter(isRoleItem).map(toRole) }); // maps and returns roles only, ignores movie object
   } catch (err) {
     console.error("DynamoDB error:", err);
     return response(500, {message: "Internal server error"});
