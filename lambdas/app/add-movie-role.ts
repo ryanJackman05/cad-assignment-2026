@@ -1,7 +1,7 @@
 import type { APIGatewayProxyEvent, APIGatewayProxyResult } from "aws-lambda";
-import { TransactWriteCommand, GetCommand } from "@aws-sdk/lib-dynamodb";
+import { TransactWriteCommand } from "@aws-sdk/lib-dynamodb";
 import { TransactionCanceledException } from "@aws-sdk/client-dynamodb";
-import { actorKey, ddb, movieKey, type Role, tableName, parseId } from "../shared/db";
+import { actorKey, movieKey, type Role, tableName, parseId } from "../shared/db";
 import { isResponse, parseJsonObject, response, createDDbDocClient } from "../shared/http";
 
 const ddbDocClient = createDDbDocClient();
