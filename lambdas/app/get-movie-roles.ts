@@ -4,6 +4,7 @@ import {
   ddb,
   isRoleItem,
   movieKey,
+  actorKey,
   parseId,
   tableName,
   toRole,
@@ -45,12 +46,12 @@ export const handler = async (
 
     if (actorId !== undefined) {
       const roleItem = resultItems.find( // extracts the correct role from the array (which should consist of Role/Movie)
-        (item) => item.SK === `a#${actorId}` // TODO fix with actorKey in code pass
+        (item) => item.SK === actorKey(actorId)
       );
       if (!roleItem) {
         return response(404, { message: `No role found for actor ${actorId} on movie ${movieId}` });
       }
-      return response(200, { data: [toRole(roleItem)] }); // TODO - toActor/toRole always return an object, so null checks may be a good idea
+      return response(200, { data: [toRole(roleItem)] });
     }
 
     return response(200, { data: resultItems.filter(isRoleItem).map(toRole) }); // maps and returns roles only, ignores movie object
