@@ -1,5 +1,5 @@
 import type { APIGatewayProxyEvent, APIGatewayProxyResult } from 'aws-lambda';
-import { marshall, marshallOptions, unmarshallOptions } from "@aws-sdk/util-dynamodb";
+import { marshallOptions, unmarshallOptions } from "@aws-sdk/util-dynamodb";
 import { DynamoDBClient } from "@aws-sdk/client-dynamodb";
 import { DynamoDBDocumentClient } from "@aws-sdk/lib-dynamodb";
 

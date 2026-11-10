@@ -1,14 +1,17 @@
 import type { APIGatewayProxyEvent, APIGatewayProxyResult } from "aws-lambda";
-import { TransactWriteCommand, GetCommand } from "@aws-sdk/lib-dynamodb";
+import { TransactWriteCommand } from "@aws-sdk/lib-dynamodb";
 import { TransactionCanceledException } from "@aws-sdk/client-dynamodb";
-import { actorKey, ddb, movieKey, type Role, tableName, parseId } from "../shared/db";
+import { actorKey, movieKey, type Role, tableName, parseId } from "../shared/db";
 import { isResponse, parseJsonObject, response, createDDbDocClient } from "../shared/http";
+import { logRequest } from "../shared/request-logger";
 
 const ddbDocClient = createDDbDocClient();
 
 export const handler = async (event: APIGatewayProxyEvent): Promise<APIGatewayProxyResult> => {
   const body = parseJsonObject(event);
   if (isResponse(body)) return body;
+
+  logRequest(event);
 
   const movieId = parseId(body.movieId as string);
   if (movieId === undefined) {
@@ -68,7 +71,7 @@ export const handler = async (event: APIGatewayProxyEvent): Promise<APIGatewayPr
     );
     return response(201, { message: "Role added", data: role });
   } catch (err) {
-    if (err instanceof TransactionCanceledException) {
+    if (err instanceof TransactionCanceledException) { // implicit cast to err type allows easy access to CancellationReasons
 
       const reasons = err.CancellationReasons ?? []; // returns empty if undefined
       if(reasons[0]?.Code === "ConditionalCheckFailed") {
