@@ -29,17 +29,24 @@ export const handler = async (
   } 
 
   try {
-    const queryResult = await ddb.send(
+    // for outputs to be added to
+    let lastKey: Record<string, any> | undefined; // | undefined allows for undefined on first iteration
+    let resultItems: Record<string, any>[] = [];
+
+    do {
+      const queryResult = await ddb.send(
       new QueryCommand({
         TableName: tableName,
         KeyConditionExpression: "PK = :pk",
         ExpressionAttributeValues: { ":pk": movieKey(movieId) },
-        // ExclusiveStartKey: lastKey,
-      })
-    );
+        ExclusiveStartKey: lastKey
+      }));
 
-    const resultItems = queryResult.Items ?? [];
+      resultItems = resultItems.concat(queryResult.Items ?? []);
+      lastKey = queryResult.LastEvaluatedKey;  // queryresult.LastEvaluatedKey is undefined if there are no more results, which will break the loop
+    } while (lastKey)
 
+      
     if(resultItems.length === 0) { // there will be at least one item if a movie exists
       return response(404, { message: `Movie ${movieId} not found` });
     }
