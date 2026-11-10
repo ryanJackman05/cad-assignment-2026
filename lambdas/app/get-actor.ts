@@ -54,7 +54,7 @@ export const handler = async (event: APIGatewayProxyEvent): Promise<APIGatewayPr
     const actor = toActor(actorResult.Item);
     const role = roleResult?.Item ? toRole(roleResult.Item) : undefined; // undefined check required due to roleResult
     
-    return response(200, { data: role ? { actor, role } : { actor } });
+    return response(200, { data: role ? { actor, role } : actor }); // return objects with their type labels ONLY when role is also being returned
     
   } catch (err) {
     console.error("DynamoDB error:", err);
