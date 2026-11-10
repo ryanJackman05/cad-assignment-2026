@@ -1,6 +1,7 @@
 import type { APIGatewayProxyEvent, APIGatewayProxyResult } from "aws-lambda";
 import { TransactWriteCommand, GetCommand } from "@aws-sdk/lib-dynamodb";
-import { actorKey, ddb, movieKey, type Role, tableName } from "../shared/db";
+import { TransactionCanceledException } from "@aws-sdk/client-dynamodb";
+import { actorKey, ddb, movieKey, type Role, tableName, parseId } from "../shared/db";
 import { isResponse, parseJsonObject, response, createDDbDocClient } from "../shared/http";
 
 const ddbDocClient = createDDbDocClient();
@@ -8,6 +9,15 @@ const ddbDocClient = createDDbDocClient();
 export const handler = async (event: APIGatewayProxyEvent): Promise<APIGatewayProxyResult> => {
   const body = parseJsonObject(event);
   if (isResponse(body)) return body;
+
+  const movieId = parseId(body.movieId as string);
+  if (movieId === undefined) {
+    return response(400, { message: "movieID must be a positive integer" });
+  }
+  const actorId = parseId(body.actorId as string);
+  if (actorId === undefined) {
+    return response(400, { message: "actorID must be a positive integer" });
+  }
 
   const role: Role = {
     movieId: body.movieId as number,
@@ -18,26 +28,6 @@ export const handler = async (event: APIGatewayProxyEvent): Promise<APIGatewayPr
 
   try {
     // Check if its IDs are valid
-    const actorResult = await ddb.send(
-      new GetCommand({
-        TableName: tableName,
-        Key: { PK: actorKey(role.actorId), SK: actorKey(role.actorId) },
-      })
-    );
-    if (!actorResult.Item) {
-      return response(400, { message: `Actor ${role.actorId} does not exist` });
-    }
-
-    const movieResult = await ddb.send(
-      new GetCommand({
-        TableName: tableName,
-        Key: { PK: movieKey(role.movieId), SK: movieKey(role.movieId) },
-      })
-    );
-    if (!movieResult.Item) {
-      return response(400, { message: `Movie ${role.movieId} does not exist` });
-    }
-
     await ddbDocClient.send(
       new TransactWriteCommand({
         TransactItems: [
@@ -78,10 +68,23 @@ export const handler = async (event: APIGatewayProxyEvent): Promise<APIGatewayPr
     );
     return response(201, { message: "Role added", data: role });
   } catch (err) {
-    console.error("DynamoDB error:", err);
+    if (err instanceof TransactionCanceledException) {
+
+      const reasons = err.CancellationReasons ?? []; // returns empty if undefined
+      if(reasons[0]?.Code === "ConditionalCheckFailed") {
+        return response(404, { message: `Movie ${role.movieId} does not exist` });
+      }
+      if(reasons[1]?.Code === "ConditionalCheckFailed") {
+        return response(404, { message: `Actor ${role.actorId} does not exist` });
+      }
+      if(reasons[2]?.Code === "ConditionalCheckFailed") {
+        return response(409, { message: "Actor already has a role in this movie" }); // 409 conflict
+      }
+    }
+    // if none of the previous checks apply to this error, return a generic 500 error
+    console.error("DynamoDB error:", err); // err should only be logged internally, not returned to the client
     return response(500, {
-      message: "Internal server error",
-      error: err,
+      message: "Internal server error"
     });
   }
 };
