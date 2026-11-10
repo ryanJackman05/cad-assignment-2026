@@ -11,7 +11,7 @@ export const handler = async (event: APIGatewayProxyEvent): Promise<APIGatewayPr
   const body = parseJsonObject(event);
   if (isResponse(body)) return body;
 
-  logRequest(event)
+  logRequest(event);
 
   const movieId = parseId(body.movieId as string);
   if (movieId === undefined) {

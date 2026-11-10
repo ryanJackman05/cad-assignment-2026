@@ -12,9 +12,7 @@ import {
 import { response } from "../shared/http";
 import { logRequest } from "../shared/request-logger";
 
-export const handler = async (
-  event: APIGatewayProxyEvent
-): Promise<APIGatewayProxyResult> => {
+export const handler = async (event: APIGatewayProxyEvent): Promise<APIGatewayProxyResult> => {
   logRequest(event);
 
   const movieId = parseId(event.pathParameters?.movieID);
@@ -46,7 +44,7 @@ export const handler = async (
       lastKey = queryResult.LastEvaluatedKey;  // queryresult.LastEvaluatedKey is undefined if there are no more results, which will break the loop
     } while (lastKey)
 
-      
+
     if(resultItems.length === 0) { // there will be at least one item if a movie exists
       return response(404, { message: `Movie ${movieId} not found` });
     }
