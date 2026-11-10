@@ -19,20 +19,6 @@ export const handler = async (event: APIGatewayProxyEvent): Promise<APIGatewayPr
 
   try {
     // Check if its IDs are valid
-    const actorResult = await ddb.send(
-      new GetCommand({
-        TableName: tableName,
-        Key: { PK: actorKey(role.actorId), SK: actorKey(role.actorId) },
-      })
-    );
-
-    const movieResult = await ddb.send(
-      new GetCommand({
-        TableName: tableName,
-        Key: { PK: movieKey(role.movieId), SK: movieKey(role.movieId) },
-      })
-    );
-
     await ddbDocClient.send(
       new TransactWriteCommand({
         TransactItems: [
@@ -85,7 +71,6 @@ export const handler = async (event: APIGatewayProxyEvent): Promise<APIGatewayPr
       if(reasons[2]?.Code === "ConditionalCheckFailed") {
         return response(409, { message: "Actor already has a role in this movie" }); // 409 conflict
       }
-      return response(400, { message: "Transaction failed", reasons }); // unlikely to hit, check if necessary
     }
     // if none of the previous checks apply to this error, return a generic 500 error
     console.error("DynamoDB error:", err); // err should only be logged internally, not returned to the client
